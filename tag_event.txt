@@ -1,0 +1,16 @@
+iteration
+event_type
+device_num
+mac
+sn
+event_id
+timestamp_ms
+timestamp_iso
+timestamp_local
+latitude
+longitude
+battery
+accuracy
+confidence
+address
+notes
