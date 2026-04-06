@@ -12,7 +12,7 @@ import publisher.C_PublisRabbitMQ;
 
 /**
  *
- * @author xanum
+ * @author ByXanum
  */
 public class C_Session {    // === Login ===
     
@@ -65,7 +65,7 @@ public class C_Session {    // === Login ===
         var y_itemsEnc = y_resJson.getString("items");
         var y_decrypted = this.CRIPTO.decrypt3DES_ECB_Base64(y_itemsEnc, _key);
         var y_recordsObj = new JSONObject(y_decrypted);
-        if (!y_resJson.has("records")) throw new Exception ("Sin nodo [records] en Desencriptado devices");
+        if (!y_recordsObj.has("records")) throw new Exception ("Sin nodo [records] en Desencriptado devices");
         var y_records = y_recordsObj.getJSONArray("records");
         this.INFOMAP.clear();
         for (int i = 0; i < y_records.length(); i++) {
@@ -92,15 +92,22 @@ public class C_Session {    // === Login ===
         var y_enc = this.CRIPTO.encrypt3DES_ECB_Base64(y_plain.toString(), _key);
         var y_body=new JSONObject().put("userId", _userId).put("data", y_enc);
         var y_resJson = this.POST.post(this.API.getString("location"), y_body);
-        var y_resObj = new JSONObject(y_resJson);
-        String y_decry = this.CRIPTO.decrypt3DES_ECB_Base64(y_resObj.getString("items"), _key);
-        JSONObject y_dec=new JSONObject(y_decry);
-        Iterator<String> y_keys = y_dec.keys();
-        while (y_keys.hasNext()) {
-            String y_key = y_keys.next();
-            if (!this.TAGS.getTags().contains(y_key)) y_keys.remove();
-        }
-        _rabb.PublicarMQ(y_dec);
+        String y_decry = this.CRIPTO.decrypt3DES_ECB_Base64(y_resJson.getString("items"), _key);
+        var y_dec=new JSONObject(y_decry);
+        if (!y_dec.has("records")) return;
+        var y_rec=y_dec.getJSONArray("records");
+        for (int i=0; i<y_rec.length();i++) {
+            var y_mob=y_rec.getJSONObject(i);
+            if (!this.TAGS.getAll()) {
+                Iterator<String> y_keys = y_mob.keys();
+                while (y_keys.hasNext()) {
+                    String y_key = y_keys.next();
+                    if (!this.TAGS.getTags().contains(y_key)) y_keys.remove();
+                }
+            }   
+            y_mob.put("vid", _deviceNum).put("custom", this.INFOMAP.get(_deviceNum).getString("custom"));
+            _rabb.PublicarMQ(y_mob);
+        }    
     }
 
 }

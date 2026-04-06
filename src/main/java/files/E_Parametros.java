@@ -22,7 +22,7 @@ public enum E_Parametros {
     RABBITMQ_PORT("5672"),
     RABBITMQ_VHOST("/"),
     RABBITMQ_USER("prueba"),
-    RABBITMQ_PASS("test"),
+    RABBITMQ_PASS("1234"),
     RABBITMQ_EXCHANGE("change"),
     RABBITMQ_PROVIDER("T-SIGO-02"),  
     RABBITMQ_TOPIC("iop.vid.custom"),

@@ -27,7 +27,7 @@ public class C_JedisConnect {
         if (!_redispa.has("uri")) throw new Exception("falta URL de conexion Redis");
         if (!_redispa.has("pto")) throw new Exception("Falta puerto de conexion Redis");
         if (_redispa.getString("uri")==null) throw new Exception("falta URL de conexion Redis");
-        this.NOMBRE = "server:".concat(_iop).concat(":vid:");
+        this.NOMBRE = "server:".concat(_iop).concat(":vid");
         this.PASS = _redispa.has("pass")?_redispa.getString("pass"):null;
         this.URI = _redispa.getString("uri");
         this.PTO = _redispa.getInt("pto");
