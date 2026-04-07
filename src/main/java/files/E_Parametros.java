@@ -10,6 +10,7 @@ import java.util.List;
 public enum E_Parametros {
 
     IOP_NOMBRE("TSIGO_RBI"),
+    IOP_SAMPLE("5"),
     API_CID("bMsmOTeAw/fj3Fng/ieoQWBmyeNvqWAX"),
     API_USER("Rbitech2026"),
     API_PASS("Rb1t3ch2026"),
@@ -27,8 +28,7 @@ public enum E_Parametros {
     RABBITMQ_TOPIC("iop.vid.custom"),
     REDIS_URI("192.168.1.65"),
     REDIS_PORT("6379"),
-    REDIS_PASS(""),
-    REDIS_SAMPLE("60");
+    REDIS_PASS("");
             
     private String e_valor;
 

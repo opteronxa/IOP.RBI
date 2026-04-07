@@ -39,8 +39,14 @@ public final class S_Configuracion {
     }
     
     public String getNombre() {
-        return AI.getParametroSTR("IOP_NOMBRE");
+       return AI.getParametroSTR("IOP_NOMBRE");
     }    
+    
+    public int getFrecuencia() throws Exception {
+        int y_frec = AI.getParametroINT("IOP_SAMPLE");
+        if ((y_frec<1)||(y_frec>30)) throw new Exception ("iop.frecuencia Invalido - Rango entre 1 y 30 (min)");
+        return y_frec;
+    }   
     
     public JSONObject getAPI_URL() {
         try {
@@ -188,6 +194,7 @@ public final class S_Configuracion {
         private String getLLave(String _pa) {
             return switch (_pa.toUpperCase()) {
                 case "IOP_NOMBRE"        -> "iop.nombre";
+                case "IOP_SAMPLE"        -> "iop.frecuencia";   
                 case "API_CID"           -> "api.cid";
                 case "API_USER"          -> "api.user";
                 case "API_PASS"          -> "api.pass";
@@ -206,7 +213,6 @@ public final class S_Configuracion {
                 case "REDIS_URI"         -> "redis.uri";
                 case "REDIS_PORT"        -> "redis.port";
                 case "REDIS_PASS"        -> "redis.pass";
-                case "REDIS_SAMPLE"      -> "redis.frecuencia";
                 default -> "";     
             };
         }  
@@ -241,6 +247,7 @@ public final class S_Configuracion {
         private String getReversa(String _pa) {
             return switch (_pa.toLowerCase()) {
                 case "iop.nombre"            -> "IOP_NOMBRE";
+                case "iop.frecuencia"        -> "IOP_SAMPLE";
                 case "api.cid"               -> "API_CID";
                 case "api.user"              -> "API_USER";
                 case "api.pass"              -> "API_PASS";
@@ -259,7 +266,6 @@ public final class S_Configuracion {
                 case "redis.uri"             -> "REDIS_URI";
                 case "redis.port"            -> "REDIS_PORT";
                 case "redis.pass"            -> "REDIS_PASS";
-                case "redis.frecuencia"      -> "REDIS_SAMPLE";
                 default -> "";     
             };
         }  
