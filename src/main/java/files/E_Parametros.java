@@ -10,7 +10,6 @@ import java.util.List;
 public enum E_Parametros {
 
     IOP_NOMBRE("TSIGO_RBI"),
-    IOP_TAG("tag_event.txt"),
     API_CID("bMsmOTeAw/fj3Fng/ieoQWBmyeNvqWAX"),
     API_USER("Rbitech2026"),
     API_PASS("Rb1t3ch2026"),

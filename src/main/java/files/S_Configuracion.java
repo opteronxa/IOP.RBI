@@ -42,10 +42,6 @@ public final class S_Configuracion {
         return AI.getParametroSTR("IOP_NOMBRE");
     }    
     
-    public String getFileTag() {
-        return AI.getParametroSTR("IOP_TAG");
-    }    
-    
     public JSONObject getAPI_URL() {
         try {
             var y_url=AI.getParametroSTR("API_URL");
@@ -192,7 +188,6 @@ public final class S_Configuracion {
         private String getLLave(String _pa) {
             return switch (_pa.toUpperCase()) {
                 case "IOP_NOMBRE"        -> "iop.nombre";
-                case "IOP_TAG"           -> "iop.filetag";
                 case "API_CID"           -> "api.cid";
                 case "API_USER"          -> "api.user";
                 case "API_PASS"          -> "api.pass";
@@ -246,7 +241,6 @@ public final class S_Configuracion {
         private String getReversa(String _pa) {
             return switch (_pa.toLowerCase()) {
                 case "iop.nombre"            -> "IOP_NOMBRE";
-                case "iop.filetag"           -> "IOP_TAG";   
                 case "api.cid"               -> "API_CID";
                 case "api.user"              -> "API_USER";
                 case "api.pass"              -> "API_PASS";

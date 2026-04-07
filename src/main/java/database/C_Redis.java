@@ -40,6 +40,7 @@ public class C_Redis implements AutoCloseable {
                 String y_j = y_jed.hget(this.REDI.getKEY(), _vid);
                 JSONObject y_vid = new JSONObject(y_j);
                 if (!y_vid.has("consec")) y_vid.put("consec", 0);
+                if (!y_vid.has("time")) y_vid.put("time", 0);
                 return y_vid.put("ok", y_vid.has("custom"));
             }    
         } catch (JSONException | NullPointerException e) {

@@ -2,7 +2,6 @@ package iop;
 
 import process.C_Logger;
 import process.C_Session;
-import files.C_Files;
 import files.S_Configuracion;
 
 /**
