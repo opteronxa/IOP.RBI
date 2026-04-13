@@ -25,7 +25,7 @@ public enum E_Parametros {
     RABBITMQ_PASS("1234"),
     RABBITMQ_EXCHANGE("change"),
     RABBITMQ_PROVIDER("T-SIGO-02"),  
-    RABBITMQ_TOPIC("iop.vid.custom"),
+    RABBITMQ_TOPIC("iop.custom.devicenum"),
     REDIS_URI("192.168.1.65"),
     REDIS_PORT("6379"),
     REDIS_PASS("");
