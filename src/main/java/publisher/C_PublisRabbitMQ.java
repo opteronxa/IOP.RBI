@@ -28,10 +28,8 @@ public class C_PublisRabbitMQ implements AutoCloseable {
     private final String EXCHANGE;
     private final Set<Integer> TOPIC = new TreeSet<>();
     private final StringBuilder KEYTOPIC = new StringBuilder();
-    private final String NOMBRE;
 
     public C_PublisRabbitMQ() throws Exception {
-        this.NOMBRE = Iop.CONF.getNombre();
         try {
             JSONObject y_jmq=Iop.CONF.getMQ();
             ConnectionFactory faconn= new ConnectionFactory();
@@ -63,12 +61,12 @@ public class C_PublisRabbitMQ implements AutoCloseable {
             if (!this.KEYTOPIC.isEmpty())  this.KEYTOPIC.setLength(0);
             for (int y_i : this.TOPIC) {
                 switch (y_i) {
-                    case 0 -> { this.KEYTOPIC.append(this.NOMBRE).append("."); }
-                    case 1 -> { this.KEYTOPIC.append(_pay.getString("custom")).append("."); }
-                    case 2 -> { this.KEYTOPIC.append(_pay.getString("vid")).append("."); }
+                    case 0 -> { this.KEYTOPIC.append(_pay.getJSONObject("iop").getString("name")).append("."); }
+                    case 1 -> { this.KEYTOPIC.append(_pay.getJSONObject("iop").getString("custom")).append("."); }
+                    case 2 -> { this.KEYTOPIC.append(_pay.getString("deviceNum")).append("."); }
                 }
             }
-            if (this.KEYTOPIC.isEmpty())  this.KEYTOPIC.append(this.NOMBRE).append(".");
+            if (this.KEYTOPIC.isEmpty())  this.KEYTOPIC.append(_pay.getJSONObject("iop").getString("name")).append(".");
             this.KEYTOPIC.delete(this.KEYTOPIC.length() - 1, this.KEYTOPIC.length());
             this.Publicar(_pay);
         } catch (JSONException e) {
@@ -79,7 +77,7 @@ public class C_PublisRabbitMQ implements AutoCloseable {
     @SuppressWarnings("UseSpecificCatch")
     private void Publicar(JSONObject _pay) throws Exception {
         try {
-/**/  System.out.println("RABBIT: " + _pay.toString() );
+/**///  System.out.println("RABBIT: " + _pay.toString() );
             this.CHAN.basicPublish(this.EXCHANGE, this.KEYTOPIC.toString(), null, _pay.toString().getBytes());
         } catch (Exception e1) {
             LOG.error("RabbitMQ publish failed for key {} payload {}", this.KEYTOPIC, _pay, e1);

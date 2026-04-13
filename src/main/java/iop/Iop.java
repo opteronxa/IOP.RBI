@@ -10,7 +10,7 @@ import files.S_Configuracion;
  */
 public class Iop {
 
-    public static String S_Version = "1.0";
+    public static String S_Version = "1.1";
     public static S_Configuracion CONF;
     public static boolean S_StopReq=false;
     public static C_Condicion PAUSA=new C_Condicion();
@@ -22,16 +22,15 @@ public class Iop {
         try {
             CONF = S_Configuracion.getInstancia();
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("Deteniendo...");
+                LOG.info("Deteniendo IOP...");
                 PAUSA.apagar();
             })); 
             do {
-                LOG.info("** IOP RBI ** ");
+                LOG.info("** Iniciando Ciclo IOP RBI ** ");
                 new C_Session().login();
             } while (PAUSA.esperar(CONF.getFrecuencia())); 
         } catch (Exception e) {
             LOG.error("Terminacion Abrupta de la IOP: " + e.getMessage());
-            System.exit(0);
         }
         LOG.info("<<IOP END...>>");
     }

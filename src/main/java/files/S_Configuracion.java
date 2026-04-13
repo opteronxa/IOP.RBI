@@ -48,11 +48,11 @@ public final class S_Configuracion {
         return y_frec;
     }   
     
-    public JSONObject getAPI_URL() {
+    public JSONObject getAPI_URL() throws Exception {
         try {
             var y_url=AI.getParametroSTR("API_URL");
             if (y_url.isEmpty()) throw new Exception ("URL gateway Device No Solicitado");
-            if (!y_url.startsWith("https://")) y_url="https//".concat(y_url);
+            if (!y_url.startsWith("https://")) y_url="https://".concat(y_url);
             URI y_u=new URI(y_url);
             if (!y_u.getScheme().equals("https")) throw new Exception ("URL gateway Device No definio https://");
             JSONObject y_http = new JSONObject().put("url", y_u.getScheme() + "://" + y_u.getHost() + y_u.getPath()); 
@@ -68,10 +68,9 @@ public final class S_Configuracion {
             y_http.put("device", AI.getParametroSTR("API_DEVICE"));
             if (AI.getParametroSTR("API_LOCATION").isEmpty()) throw new Exception ("URL API LOCATION No definido");
             y_http.put("location", AI.getParametroSTR("API_LOCATION"));
-            y_http.put("ok", true);
             return y_http;
         } catch (Exception e) {
-            return new JSONObject().put("ok", false);
+            throw new Exception ("Parametros URL Gateway: " + e.getMessage());
         }   
     }
 
@@ -79,8 +78,8 @@ public final class S_Configuracion {
     public JSONObject getMQ() throws Exception {
         var y_rabbit=new JSONObject();
         var y_uri=AI.getParametroSTR("RABBITMQ_URI");
+        if (y_uri.isEmpty()) throw new Exception ("Error de Parametro [rabbitmq.url]");   
         if (!y_uri.startsWith("//")) y_uri="//".concat(y_uri);
-        if (y_uri.isEmpty()) throw new Exception ("Error de Parametro [rabbitmq.url]");     
         if (AI.getParametroSTR("RABBITMQ_VHOST").isEmpty())    throw new Exception ("Error de Parametro [rabbitmq.vhost]");  
         if (AI.getParametroSTR("RABBITMQ_USER").isEmpty())     throw new Exception ("Error de Parametro [rabbitmq.user]");    
         if (AI.getParametroSTR("RABBITMQ_PASS").isEmpty())     throw new Exception ("Error de Parametro [rabbitmq.pass]");    
@@ -107,9 +106,9 @@ public final class S_Configuracion {
         JSONArray y_top=new JSONArray();
         for (String y_topic1 : y_topic) {
             switch (y_topic1.trim().toLowerCase()) {
-                case "iop"     -> y_top.put(0);
-                case "vid"     -> y_top.put(1); 
-                case "custom"  -> y_top.put(2);
+                case "iop"       -> y_top.put(0);
+                case "custom"    -> y_top.put(1);
+                case "devicenum" -> y_top.put(2); 
                 default -> throw new Exception ("Error de Parametro [rabbitmq.topic] (nombre,custom,vid)"); 
             }
         }
@@ -121,8 +120,8 @@ public final class S_Configuracion {
         var y_red=new JSONObject();
         try {
             String y_uri=AI.getParametroSTR("REDIS_URI");
-            if (!y_uri.startsWith("//")) y_uri="//".concat(y_uri);
             if (y_uri.isEmpty()) throw new Exception ("REDIS No Solicitado");
+            if (!y_uri.startsWith("//")) y_uri="//".concat(y_uri);
             int y_pto = AI.getParametroINT("REDIS_PORT");
             if (y_pto<10) y_pto=6379;
             URI y_u=new URI(y_uri);

@@ -4,6 +4,7 @@ import database.C_Redis;
 import iop.Iop;
 import java.util.HashMap;
 import java.util.Map;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import publisher.C_PublisRabbitMQ;
@@ -19,27 +20,38 @@ public class C_Session {    // === Login ===
     private final Map<String, JSONObject> INFOMAP = new HashMap<>();
     private final C_ClientHTTP POST;
     private final JSONObject API;
+    private final String IOP;
+    private int x_userid;
+    private byte[] x_key; 
+    private int x_page=1;
+    private int x_pages=1;
+    private int x_recs=0;
+    private int x_rin=0;
 
     public C_Session() throws Exception {
         this.API = Iop.CONF.getAPI_URL();
         this.POST = new C_ClientHTTP(this.API.getString("url"));
+        this.IOP = Iop.CONF.getNombre();
     }
      
     // === Login ===
     public void login() throws Exception {
         LOG.info("= LOGIN =");
-        JSONObject y_body = new JSONObject().put("cid",  this.API.getString("cid"))
-                                            .put("name", this.API.getString("user"))
-                                            .put("pwd",  this.API.getString("pass"));
-        var y_resJson = POST.post(this.API.getString("login"), y_body);
-        LOG.info("Login correcto");
         try (C_PublisRabbitMQ y_rabb = new C_PublisRabbitMQ()) {
             try (C_Redis y_reds = new C_Redis()) {
-                C_LoginResponse y_lr = new C_LoginResponse(y_resJson);
-                this.loadDevices(y_reds, y_lr.getUserID(), y_lr.getKey());
-                for (String s: this.INFOMAP.keySet()) {
-                    this.getEvent(y_rabb, y_reds, y_lr.getUserID(), y_lr.getKey(), s);
-                }
+                JSONObject y_body = new JSONObject().put("cid",  this.API.getString("cid"))
+                                                    .put("name", this.API.getString("user"))
+                                                    .put("pwd",  this.API.getString("pass"));
+                var y_resJson = POST.post(this.API.getString("login"), y_body);
+                var y_now = System.currentTimeMillis();
+                LOG.info("Login correcto");  
+                LoginResponse(y_resJson);
+                do {
+                    this.loadDevices(y_reds);
+                    this.INFOMAP.forEach((D, I) ->  this.getEvent(y_rabb, y_reds, D, I, y_now));
+                    ++this.x_page;
+                } while (this.x_page<this.x_pages);    
+                LOG.info("Total de Records Insertados " + this.x_rin);
             } catch (Exception e2) {
                 throw new Exception ("Secuencia2 Redis " + e2.getMessage());
             }
@@ -47,65 +59,84 @@ public class C_Session {    // === Login ===
             throw new Exception ("Secuencia1 Rabbit " + e1.getMessage());
         }    
     }
+
+    public void LoginResponse(JSONObject _res) throws Exception {
+        if (!_res.has("items")) throw new Exception ("JSON Response no tiene items"); 
+        var y_items =  _res.getJSONObject("items");
+        if (!y_items.has("id")) throw new Exception ("JSON Response no tiene id");
+        if (!y_items.has("token")) throw new Exception ("JSON Response no tiene token");
+        this.x_userid = y_items.getInt("id");
+        var y_token = y_items.getString("token");
+        this.x_key = y_token.substring(0, 24).getBytes("UTF-8");
+    }
     
     // === loadDevices con JSONObject ===
-    public void loadDevices(C_Redis _reds, int _userId, byte[] _key) throws Exception {
-        LOG.info("= GET DEVICE LIST =");
-        var y_plain = new JSONObject().put("pageNo", 1)
+    public void loadDevices(C_Redis _reds) throws Exception {
+        LOG.info("= GET DEVICE LIST " + this.x_page + " =");
+        var y_plain = new JSONObject().put("pageNo", this.x_page)
                                       .put("pageSize", 200)
-                                      .put("queryFilter", new JSONObject().put("userId", _userId));
-        var y_enc = this.CRIPTO.encrypt3DES_ECB_Base64(y_plain.toString(), _key);
-        var y_body = new JSONObject().put("userId", _userId).put("data", y_enc);
+                                      .put("queryFilter", new JSONObject().put("userId", this.x_userid));
+        var y_enc = this.CRIPTO.encrypt3DES_ECB_Base64(y_plain.toString(), this.x_key);
+        var y_body = new JSONObject().put("userId", this.x_userid).put("data", y_enc);
         var y_resJson = this.POST.post(this.API.getString("device"), y_body);
         if (!y_resJson.has("items")) throw new Exception ("Sin nodo [items] en devices");
         var y_itemsEnc = y_resJson.getString("items");
-        var y_decrypted = this.CRIPTO.decrypt3DES_ECB_Base64(y_itemsEnc, _key);
+        var y_decrypted = this.CRIPTO.decrypt3DES_ECB_Base64(y_itemsEnc, this.x_key);
         var y_recordsObj = new JSONObject(y_decrypted);
         if (!y_recordsObj.has("records")) throw new Exception ("Sin nodo [records] en Desencriptado devices");
         var y_records = y_recordsObj.getJSONArray("records");
+        if ((this.x_page==1)&&(!y_recordsObj.has("pages"))) this.x_pages = y_recordsObj.getInt("pages");
         this.INFOMAP.clear();
         for (int i = 0; i < y_records.length(); i++) {
-            var d = y_records.getJSONObject(i);
-            JSONObject y_red = _reds.getVId(d.getString("deviceNum"));
-            if (!y_red.getBoolean("ok")) continue;
-            this.INFOMAP.put(d.getString("deviceNum"), new JSONObject().put("mac", d.getString("mac"))
-                                                                       .put("sn",  d.getString("sn"))
-                                                                       .put("custom", y_red.getString("custom"))
-                                                                       .put("consec", y_red.getInt("consec"))
-                                                                       .put("time", y_red.getLong("time")));
+            var y_record = y_records.getJSONObject(i);
+            if (!y_record.has("deviceNum")) continue;
+            JSONObject y_redis = _reds.getVId(y_record.getString("deviceNum"));
+            if (!y_redis.getBoolean("ok")) continue;
+            y_record.put("iop",new JSONObject().put("custom", y_redis.getString("custom"))
+                                               .put("consec", y_redis.getInt("consec"))
+                                               .put("beginTime", y_redis.getLong("time")));
+            this.INFOMAP.put(y_record.getString("deviceNum"), y_record);
+            ++this.x_recs;
         }
-        LOG.info("Devices Cargados: " + y_records.length());
+        LOG.info("Devices en secuencia " + this.x_page + " Cargados en total: " + this.x_recs);
     }
     
     // === Get Event ===
-    public void getEvent(C_PublisRabbitMQ _rabb, C_Redis _reds, int _userId, byte[] _key, String _deviceNum) throws Exception {
-        var y_info = this.INFOMAP.get(_deviceNum);
-        var y_conse = y_info.getInt("consec");
-        long y_now = System.currentTimeMillis();
-        long y_bef = y_info.getLong("time");
-        if (y_bef<(y_now - 86400000)) y_bef =(y_now - 86400000);
-               JSONObject y_plain = new JSONObject().put("pageNo", 1)
-                                             .put("pageSize", 1)
-                                             .put("queryFilter", new JSONObject().put("deviceNum", _deviceNum)
-                                                                                 .put("userId", _userId)
-                                                                                 .put("beginTime", y_bef)
-                                                                                 .put("endTime", y_now));
-        var y_enc = this.CRIPTO.encrypt3DES_ECB_Base64(y_plain.toString(), _key);
-        var y_body=new JSONObject().put("userId", _userId).put("data", y_enc);
-        var y_resJson = this.POST.post(this.API.getString("location"), y_body);
-        String y_decry = this.CRIPTO.decrypt3DES_ECB_Base64(y_resJson.getString("items"), _key);
-        var y_dec=new JSONObject(y_decry);
-        if (!y_dec.has("records")) return;
-        var y_rec=y_dec.getJSONArray("records");
-        for (int i=0; i<y_rec.length();i++) {
-            var y_mob=y_rec.getJSONObject(i).put("vid", _deviceNum)
-                                            .put("custom", y_info.getString("custom"))
-                                            .put("consec", ++y_conse);
-            _rabb.PublicarMQ(y_mob);
-        } 
-        _reds.setVId(_deviceNum, new JSONObject().put("custom", y_info.getString("custom"))
-                                                 .put("consec", y_conse)
-                                                 .put("time", ++y_now));
+    public void getEvent(C_PublisRabbitMQ _rabb, C_Redis _reds, String _devicenum, JSONObject _info, long _now) {
+        if (!_info.has("iop")) return;
+        JSONObject y_iop = _info.getJSONObject("iop");
+        var y_conse = y_iop.optInt("consec");
+        long y_beg = y_iop.optLong("beginTime");
+        try {
+            if (y_beg<(_now - 86400000)) {
+                y_beg =(_now - 86400000);
+                y_iop.put("beginTime", y_beg);
+            }
+            JSONObject y_plain = new JSONObject().put("pageNo", 1)
+                                                 .put("pageSize", 1)
+                                                 .put("queryFilter", new JSONObject().put("deviceNum", _devicenum)
+                                                                                     .put("userId", this.x_userid)
+                                                                                     .put("beginTime", y_beg)
+                                                                                     .put("endTime", _now));
+            var y_enc = this.CRIPTO.encrypt3DES_ECB_Base64(y_plain.toString(), this.x_key);
+            var y_body=new JSONObject().put("userId", this.x_userid).put("data", y_enc);
+            var y_resJson = this.POST.post(this.API.getString("location"), y_body);
+            if (!y_resJson.has("items")) return;
+            var y_dec=new JSONObject(this.CRIPTO.decrypt3DES_ECB_Base64(y_resJson.getString("items"), this.x_key));
+            if (!y_dec.has("records")) return;
+            JSONArray y_record=y_dec.getJSONArray("records");
+            if (y_record.isEmpty()) return;
+            y_iop.put("name",this.IOP).put("endTime", _now);
+            _info.put("records", y_record);
+            _info.put("iop", y_iop);
+            _rabb.PublicarMQ(_info);
+            _reds.setVId(_devicenum, new JSONObject().put("custom", y_iop.getString("custom"))
+                                                     .put("consec", y_conse)
+                                                     .put("time", _now+1));
+            ++this.x_rin;
+        } catch (Exception e) {
+            LOG.info("Error Devices Num " + _devicenum);
+        }    
     }
 
 }
