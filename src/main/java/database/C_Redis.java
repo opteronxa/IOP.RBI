@@ -28,7 +28,7 @@ public class C_Redis implements AutoCloseable {
             this.REDI.Connect();
             LOG.info("Conexion database REDIS OK!");
         } catch (Exception e) {
-            throw new Exception("Sin coneccion a Redis: " + e.getMessage());
+            throw new Exception("SIN CONEXION Estable a REDIS: " + e.getMessage());
         }
     }
 
@@ -109,4 +109,5 @@ public class C_Redis implements AutoCloseable {
     }
 
 }
+
 

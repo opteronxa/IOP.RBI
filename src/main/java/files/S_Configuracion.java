@@ -35,6 +35,9 @@ public final class S_Configuracion {
     private S_Configuracion() throws Exception { 
         this.AI=new Configuracion();
         if (AI.getParametroSTR("IOP_NOMBRE").isEmpty()) throw new Exception ("Error de Parametro [iop.nombre]");
+        int y_frec = this.getFrecuencia();
+        if ((y_frec<1)||(y_frec>30)) throw new Exception ("iop.frecuencia Invalido - Rango entre 1 y 30 (min)");
+        this.getAPI_URL();
         this.getMQ();
     }
     
@@ -42,10 +45,8 @@ public final class S_Configuracion {
        return AI.getParametroSTR("IOP_NOMBRE");
     }    
     
-    public int getFrecuencia() throws Exception {
-        int y_frec = AI.getParametroINT("IOP_SAMPLE");
-        if ((y_frec<1)||(y_frec>30)) throw new Exception ("iop.frecuencia Invalido - Rango entre 1 y 30 (min)");
-        return y_frec;
+    public int getFrecuencia() {
+        return AI.getParametroINT("IOP_SAMPLE");
     }   
     
     public JSONObject getAPI_URL() throws Exception {

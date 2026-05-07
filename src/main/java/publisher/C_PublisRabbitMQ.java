@@ -52,7 +52,7 @@ public class C_PublisRabbitMQ implements AutoCloseable {
                 TOPIC.add(y_jmq.getJSONArray("topic").getInt(y_i));
             }
         }catch (IOException e) {
-            throw new Exception("RabbitMQ: " + e.getMessage());
+            throw new Exception("SIN CONEXION Estable a RABBITMQ: " + e.getMessage());
         }
     }
 
