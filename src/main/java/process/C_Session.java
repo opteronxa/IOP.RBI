@@ -45,19 +45,23 @@ public class C_Session {    // === Login ===
         try (C_PublisRabbitMQ y_rabb = new C_PublisRabbitMQ()) {
             try (C_Redis y_reds = new C_Redis()) {
                 this.x_post = new C_ClientHTTP(this.API.getString("url"));
-                LoginResponse();
-                LOG.info("Login correcto"); 
-                var y_now = System.currentTimeMillis();
-                do {
-                    try {
-                        this.loadDevices(y_reds);
-                        this.INFOMAP.forEach((D, I) ->  this.getEvent(y_rabb, y_reds, D, I, y_now));
-                        ++this.x_page;
-                    } catch (Exception e3) {
-                        throw new Exception (e3.getMessage());
-                    }    
-                } while (this.x_page<this.x_pages);    
-                LOG.info("Total Regitros Publicados y confirmado en RabbitMQ: " + this.x_rin);
+                try {
+                    LoginResponse();
+                    LOG.info("Login correcto"); 
+                    var y_now = System.currentTimeMillis();
+                    do {
+                        try {
+                            this.loadDevices(y_reds);
+                            this.INFOMAP.forEach((D, I) ->  this.getEvent(y_rabb, y_reds, D, I, y_now));
+                            ++this.x_page;
+                        } catch (Exception e4) {
+                            throw new Exception (e4.getMessage());
+                        }    
+                    } while (this.x_page<this.x_pages);    
+                    LOG.info("Total Regitros Publicados y confirmado en RabbitMQ: " + this.x_rin);
+                } catch (Exception e3) {
+                    LOG.error("No pudo concretarse el Login: " + e3.getMessage());
+                }     
             } catch (Exception e2) {
                 throw new Exception (e2.getMessage());
             }
@@ -74,10 +78,11 @@ public class C_Session {    // === Login ===
                                                 .put("name", this.API.getString("user"))
                                                 .put("pwd",  this.API.getString("pass"));
             var y_resJson = this.x_post.post(this.API.getString("login"), y_body);
-            if (!y_resJson.has("items")) throw new Exception ("JSON Response no tiene items"); 
+            if (y_resJson.isEmpty()) throw new Exception ("JSON Response del  Gateway esta Vacio"); 
+            if (!y_resJson.has("items")) throw new Exception ("JSON Response del  Gateway no tiene nodo [items]: " + y_resJson.toString()); 
             var y_items =  y_resJson.getJSONObject("items");
-            if (!y_items.has("id")) throw new Exception ("JSON Response no tiene id");
-            if (!y_items.has("token")) throw new Exception ("JSON Response no tiene token");
+            if (!y_items.has("id")) throw new Exception ("JSON Response del Gateway no tiene nodo [id]: " + y_resJson.toString());
+            if (!y_items.has("token")) throw new Exception ("JSON Response del Gateway no tiene nodo [token]" + y_resJson.toString());
             this.x_userid = y_items.getInt("id");
             this.x_key = y_items.getString("token").substring(0, 24).getBytes("UTF-8");
         } catch (Exception e) {
@@ -112,6 +117,7 @@ public class C_Session {    // === Login ===
                                                    .put("consec", y_redis.getInt("consec"))
                                                    .put("beginTime", y_redis.getLong("time")));
                 this.INFOMAP.put(y_record.getString("deviceNum"), y_record);
+                LOG.info("DevicesNum: " + y_record.getString("deviceNum"));
                 ++this.x_recs;
             }
             LOG.info("Devices en secuencia " + this.x_page + " Cargados en total: " + this.x_recs);

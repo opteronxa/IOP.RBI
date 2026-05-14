@@ -79,7 +79,7 @@ public class C_PublisRabbitMQ implements AutoCloseable {
     @SuppressWarnings("UseSpecificCatch")
     private void Publicar(JSONObject _pay) throws Exception {
         try {
-/**///  System.out.println("RABBIT: " + _pay.toString() );
+/**/  System.out.println("Topic[" + this.KEYTOPIC.toString() + "] -- RABBIT: " + _pay.toString() );
             this.CHAN.basicPublish(this.EXCHANGE, this.KEYTOPIC.toString(), null, _pay.toString().getBytes());
         } catch (Exception e1) {
             LOG.error("RabbitMQ publish failed for key {} payload {}", this.KEYTOPIC, _pay, e1);
