@@ -56,7 +56,7 @@ public class C_PublisRabbitMQ implements AutoCloseable {
         }
     }
 
-    public void PublicarMQ(JSONObject _pay) throws Exception {
+    public boolean PublicarMQ(JSONObject _pay) throws Exception {
         try {
             if (!this.KEYTOPIC.isEmpty())  this.KEYTOPIC.setLength(0);
             for (int y_i : this.TOPIC) {
@@ -69,8 +69,10 @@ public class C_PublisRabbitMQ implements AutoCloseable {
             if (this.KEYTOPIC.isEmpty())  this.KEYTOPIC.append(_pay.getJSONObject("iop").getString("name")).append(".");
             this.KEYTOPIC.delete(this.KEYTOPIC.length() - 1, this.KEYTOPIC.length());
             this.Publicar(_pay);
+            return true;
         } catch (JSONException e) {
             LOG.error("RabbitMQ Fallida por sintaxis de JSON incorrecta: " + _pay);
+            return false;
         }
     }
 

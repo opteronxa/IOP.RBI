@@ -57,7 +57,7 @@ public class C_Session {    // === Login ===
                         throw new Exception (e3.getMessage());
                     }    
                 } while (this.x_page<this.x_pages);    
-                LOG.info("Total Regitros Insertados " + this.x_rin);
+                LOG.info("Total Regitros Publicados y confirmado en RabbitMQ: " + this.x_rin);
             } catch (Exception e2) {
                 throw new Exception (e2.getMessage());
             }
@@ -153,11 +153,12 @@ public class C_Session {    // === Login ===
                 y_iop.put("name",this.IOP).put("endTime", _now);
                 _info.put("records", y_record);
                 _info.put("iop", y_iop);
-                _rabb.PublicarMQ(_info);
-                _reds.setVId(_devicenum, new JSONObject().put("custom", y_iop.getString("custom"))
-                                                         .put("consec", y_conse)
-                                                         .put("time", _now+1));
-                ++this.x_rin;
+                if (_rabb.PublicarMQ(_info)) {
+                    _reds.setVId(_devicenum, new JSONObject().put("custom", y_iop.getString("custom"))
+                                                             .put("consec", y_conse)
+                                                             .put("time", _now+1));
+                    ++this.x_rin;
+                }    
             } catch (Exception e2) {
                 LOG.info("->Devices Num: " + _devicenum + " : " + e2.getMessage());
             }  
