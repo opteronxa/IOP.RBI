@@ -41,13 +41,17 @@ public class C_Session {    // === Login ===
      
     // === Login ===
     public boolean login() {
-        LOG.info("= LOGIN =");
+        LOG.info("= Iniciando LOGIN GATEWAY =");
+        this.x_page=1;
+        this.x_pages=1;
+        this.x_recs=0;
+        this.x_rin=0;
         try (C_PublisRabbitMQ y_rabb = new C_PublisRabbitMQ()) {
             try (C_Redis y_reds = new C_Redis()) {
                 this.x_post = new C_ClientHTTP(this.API.getString("url"));
                 try {
                     LoginResponse();
-                    LOG.info("Login correcto"); 
+                    LOG.info("Login Aprobado por el Gateway!"); 
                     var y_now = System.currentTimeMillis();
                     do {
                         try {
@@ -60,7 +64,7 @@ public class C_Session {    // === Login ===
                     } while (this.x_page<this.x_pages);    
                     LOG.info("Total Regitros Publicados y confirmado en RabbitMQ: " + this.x_rin);
                 } catch (Exception e3) {
-                    LOG.error("No pudo concretarse el Login: " + e3.getMessage());
+                    LOG.error("Gateway Reject Login: " + e3.getMessage());
                 }     
             } catch (Exception e2) {
                 throw new Exception (e2.getMessage());
@@ -92,7 +96,7 @@ public class C_Session {    // === Login ===
     
 // === loadDevices con JSONObject ===
     public void loadDevices(C_Redis _reds) throws Exception {
-        LOG.info("= GET DEVICE LIST " + this.x_page + " =");
+        LOG.info("= Extrayendo GET DEVICE LIST " + this.x_page + " =");
         try {
             var y_plain = new JSONObject().put("pageNo", this.x_page)
                                           .put("pageSize", 200)
