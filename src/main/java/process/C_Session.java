@@ -22,8 +22,9 @@ public class C_Session {    // === Login ===
     private final JSONObject API;
     private final String IOP;
     private C_ClientHTTP x_post; 
+    private byte[] x_key;
+    private long x_secc=1;
     private int x_userid;
-    private byte[] x_key; 
     private int x_page=1;
     private int x_pages=1;
     private int x_recs=0;
@@ -41,7 +42,7 @@ public class C_Session {    // === Login ===
      
     // === Login ===
     public boolean login() {
-        LOG.info("= Iniciando LOGIN GATEWAY =");
+        LOG.info("= Iniciando LOGIN GATEWAY No." + (this.x_secc++) + " =");
         this.x_page=1;
         this.x_pages=1;
         this.x_recs=0;
@@ -96,7 +97,7 @@ public class C_Session {    // === Login ===
     
 // === loadDevices con JSONObject ===
     public void loadDevices(C_Redis _reds) throws Exception {
-        LOG.info("= Extrayendo GET DEVICE LIST " + this.x_page + " =");
+        LOG.info("= Extrayendo GET DEVICE LIST =");
         try {
             var y_plain = new JSONObject().put("pageNo", this.x_page)
                                           .put("pageSize", 200)
@@ -124,7 +125,7 @@ public class C_Session {    // === Login ===
                 LOG.info("DevicesNum: " + y_record.getString("deviceNum"));
                 ++this.x_recs;
             }
-            LOG.info("Devices en secuencia " + this.x_page + " Cargados en total: " + this.x_recs);
+            LOG.info("Devices PageNo. " + this.x_page + " Total Device: " + this.x_recs);
         } catch (Exception e) {
             throw new Exception ("->LoadDevice: " + e.getMessage());
         }    
